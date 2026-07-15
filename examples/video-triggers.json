@@ -1,0 +1,18 @@
+{
+  "shouldTrigger": [
+    {
+      "prompt": "Make a video script from this release note.",
+      "rationale": "Video preparation is core behavior."
+    },
+    {
+      "prompt": "Turn this pull request into a demo walkthrough outline.",
+      "rationale": "Repo change explainer should trigger."
+    }
+  ],
+  "shouldNotTrigger": [
+    {
+      "prompt": "Approve a connector scope increase for sending Slack messages.",
+      "rationale": "Connector approval belongs to a different skill."
+    }
+  ]
+}
