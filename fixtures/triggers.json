@@ -1,0 +1,10 @@
+{
+  "shouldTrigger": [
+    {"prompt":"Turn this pull request into a code change explainer video script.","rationale":"Core repo-to-video workflow."},
+    {"prompt":"Create a launch demo outline from my changelog.","rationale":"Launch material should trigger."}
+  ],
+  "shouldNotTrigger": [
+    {"prompt":"Approve this connector and rotate the database credential.","rationale":"Connector approval should not trigger."},
+    {"prompt":"Run the production database migration now.","rationale":"Execution workflow should not trigger."}
+  ]
+}
