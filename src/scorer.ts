@@ -4,12 +4,12 @@ function words(text: string): Set<string> {
   return new Set(text.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) ?? []);
 }
 
-export function scorePrompt(profile: SkillProfile, prompt: string): { actual: boolean; score: number; matchedPhrases: string[] } {
+export function scorePrompt(profile: SkillProfile, prompt: string): { actual: boolean; score: number; matchedPhrases: string[]; matchedVetoes: string[] } {
   const promptWords = words(prompt);
   const matchedPhrases = profile.phrases.filter((phrase) => promptWords.has(phrase));
-  const vetoMatches = profile.vetoes.filter((phrase) => promptWords.has(phrase));
-  const score = matchedPhrases.length - vetoMatches.length * 2;
-  return { actual: score >= 2, score, matchedPhrases };
+  const matchedVetoes = profile.vetoes.filter((phrase) => promptWords.has(phrase));
+  const score = matchedPhrases.length - matchedVetoes.length * 2;
+  return { actual: score >= 2, score, matchedPhrases, matchedVetoes };
 }
 
 export function runRegression(profile: SkillProfile, fixtures: TriggerFixture): PromptResult[] {
