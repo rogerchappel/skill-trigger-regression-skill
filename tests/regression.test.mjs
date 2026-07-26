@@ -21,6 +21,23 @@ test("reports matched phrases", () => {
   assert.ok(result.matchedPhrases.length >= 2);
 });
 
+test("limits vetoes to negative sections and reports matched vetoes", () => {
+  const profile = loadSkillProfile("fixtures/sectioned-skill");
+  const fixtures = loadFixtures("fixtures/sectioned-triggers.json");
+  const results = runRegression(profile, fixtures);
+
+  assert.equal(profile.vetoes.includes("destructive"), true);
+  assert.equal(profile.vetoes.includes("deletion"), true);
+  assert.equal(profile.vetoes.includes("examples"), false);
+  assert.equal(profile.vetoes.includes("alpha"), false);
+  assert.equal(profile.vetoes.includes("summary"), false);
+
+  assert.equal(results[0].actual, true);
+  assert.deepEqual(results[0].matchedVetoes, []);
+  assert.equal(results[1].actual, false);
+  assert.deepEqual(results[1].matchedVetoes.sort(), ["deletion", "destructive"]);
+});
+
 test("rejects invalid and zero-coverage fixture sets", () => {
   const invalid = [
     [{ shouldNotTrigger: [{ prompt: "no" }] }, /shouldTrigger.*array/],
