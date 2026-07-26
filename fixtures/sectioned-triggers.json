@@ -1,0 +1,14 @@
+{
+  "shouldTrigger": [
+    {
+      "prompt": "Create an alpha report and beta summary.",
+      "rationale": "Positive examples after a limitations section remain activation evidence."
+    }
+  ],
+  "shouldNotTrigger": [
+    {
+      "prompt": "Perform destructive deletion.",
+      "rationale": "The explicit limitation remains veto evidence."
+    }
+  ]
+}

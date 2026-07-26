@@ -15,6 +15,7 @@ export type PromptResult = {
   actual: boolean;
   score: number;
   matchedPhrases: string[];
+  matchedVetoes: string[];
   rationale?: string;
 };
 

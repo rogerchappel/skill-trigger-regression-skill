@@ -28,6 +28,7 @@ export function renderMarkdown(report: RegressionReport): string {
     lines.push(`- Actual trigger: ${result.actual}`);
     lines.push(`- Score: ${result.score}`);
     lines.push(`- Matched phrases: ${result.matchedPhrases.join(", ") || "none"}`);
+    lines.push(`- Matched vetoes: ${result.matchedVetoes.join(", ") || "none"}`);
     if (result.rationale) lines.push(`- Rationale: ${result.rationale}`);
     lines.push("");
   }
