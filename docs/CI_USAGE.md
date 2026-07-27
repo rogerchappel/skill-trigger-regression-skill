@@ -4,8 +4,10 @@ Run trigger regression in pull requests that change `SKILL.md`, examples, or hos
 
 ```bash
 npm ci
-npm run build
-node dist/cli.js run fixtures/sample-skill --fixtures fixtures/triggers.json --format json
+npm run release:check
 ```
 
-Use JSON output for machine gates and Markdown output for release review notes. A failing report exits with code `2` so CI can distinguish routing regressions from command errors.
+The release check runs type checking, tests, CLI help and fixture smoke runs, and
+an npm package dry-run. Use JSON output for additional machine gates and Markdown
+output for release review notes. A failing report exits with code `2` so CI can
+distinguish routing regressions from command errors.
