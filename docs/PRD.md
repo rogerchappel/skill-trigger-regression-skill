@@ -39,7 +39,8 @@ Agent skills drift when descriptions, examples, or host routing rules change. A 
 
 - Fixture-backed tests for pass, fail, and anti-example veto cases.
 - CLI smoke against checked-in sample skills.
-- `npm test`, `npm run check`, `npm run build`, `npm run smoke`, and package dry-run.
+- `npm run release:check`, which runs type checking, tests, CLI smoke and fixture
+  runs, and a package dry-run.
 
 ## Agent Prompt
 

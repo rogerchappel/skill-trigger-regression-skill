@@ -5,9 +5,15 @@ Local-first CLI and reusable agent skill for checking whether `SKILL.md` activat
 ## Quickstart
 
 ```bash
-npm install
+npm ci
 npm run build
 npx skill-trigger-regression run fixtures/sample-skill --fixtures fixtures/triggers.json --format markdown
+```
+
+Before contributing or preparing a release, run the complete local gate:
+
+```bash
+npm run release:check
 ```
 
 ## What it does

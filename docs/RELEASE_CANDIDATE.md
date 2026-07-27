@@ -11,4 +11,5 @@
 
 - No external services.
 - CLI and import API included.
-- Local validation script covers typecheck, tests, smoke, and package dry-run.
+- `npm run release:check` covers type checking, tests, CLI smoke and fixture
+  runs, and package dry-run.

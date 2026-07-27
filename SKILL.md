@@ -20,4 +20,4 @@ This skill is read-only. Do not edit the tested skill automatically, install ski
 
 ## Validation
 
-Run `npm test`, `npm run check`, and a fixture smoke before using the report as release evidence.
+Run `npm run release:check` before using the report as release evidence.
