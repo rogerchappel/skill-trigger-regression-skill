@@ -9,15 +9,37 @@ function keywords(text: string): string[] {
 }
 
 function vetoSource(body: string): string {
-  const sections = body.split(/\n(?=#{1,6}\s)/);
-  const negativeSections = sections.filter((section) => {
-    const heading = section.match(/^#{1,6}\s+(.+)$/m)?.[1] ?? "";
-    return /limitations?|should not|do not use|not for|avoid/i.test(heading);
-  });
-  const directives = body
-    .split("\n")
-    .map((line) => line.match(/(?:should not|do not use|not for)\b(.*)/i)?.[1] ?? "")
-    .filter(Boolean);
+  const negativeSections: string[] = [];
+  const directives: string[] = [];
+  let negativeSection: string[] | undefined;
+  let fence: { marker: "`" | "~"; length: number } | undefined;
+
+  for (const line of body.split("\n")) {
+    if (fence) {
+      const closingFence = line.match(/^ {0,3}(`{3,}|~{3,})[ \t]*$/)?.[1];
+      if (closingFence?.[0] === fence.marker && closingFence.length >= fence.length) fence = undefined;
+      continue;
+    }
+
+    const openingFence = line.match(/^ {0,3}(`{3,}|~{3,})/)?.[1];
+    if (openingFence) {
+      fence = { marker: openingFence[0] as "`" | "~", length: openingFence.length };
+      continue;
+    }
+
+    const heading = line.match(/^ {0,3}#{1,6}[ \t]+(.+?)#*[ \t]*$/)?.[1] ?? "";
+    if (heading) {
+      if (negativeSection) negativeSections.push(negativeSection.join("\n"));
+      negativeSection = /limitations?|should not|do not use|not for|avoid/i.test(heading) ? [line] : undefined;
+    } else if (negativeSection) {
+      negativeSection.push(line);
+    }
+
+    const directive = line.match(/(?:should not|do not use|not for)\b(.*)/i)?.[1] ?? "";
+    if (directive) directives.push(directive);
+  }
+
+  if (negativeSection) negativeSections.push(negativeSection.join("\n"));
   return [...negativeSections, ...directives].join("\n");
 }
 
