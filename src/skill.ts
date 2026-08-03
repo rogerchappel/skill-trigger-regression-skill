@@ -27,6 +27,10 @@ function vetoSource(body: string): string {
       continue;
     }
 
+    // Top-level lines indented by four spaces or a tab are Markdown code,
+    // so examples containing directive-like text must not affect vetoes.
+    if (/^(?: {4}|\t)/.test(line)) continue;
+
     const heading = line.match(/^ {0,3}#{1,6}[ \t]+(.+?)#*[ \t]*$/)?.[1] ?? "";
     if (heading) {
       if (negativeSection) negativeSections.push(negativeSection.join("\n"));

@@ -83,6 +83,60 @@ Avoid irreversible erasure operations.
   assert.deepEqual(legitimateVetoRetained.matchedVetoes.sort(), ["erasure", "irreversible", "operations"]);
 });
 
+test("excludes indented Markdown code from the veto profile", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "indented-code-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# indented-code-skill
+
+Use this skill for alpha reports and beta summaries.
+
+## Examples
+
+    do not use gamma delta
+
+\t## Limitations
+\tAvoid coded epsilon examples.
+
+Do not use for genuine destructive deletion.
+`);
+
+  const profile = loadSkillProfile(skillDir);
+
+  for (const falseVeto of ["gamma", "delta", "coded", "epsilon", "examples"]) {
+    assert.equal(profile.vetoes.includes(falseVeto), false);
+  }
+  for (const genuineVeto of ["genuine", "destructive", "deletion"]) {
+    assert.equal(profile.vetoes.includes(genuineVeto), true);
+  }
+});
+
+test("indented code directives do not cause end-to-end scoring failures", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "indented-scoring-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# indented-scoring-skill
+
+## When To Use
+
+- alpha reports
+- beta summaries
+
+## Examples
+
+    do not use gamma delta
+
+Do not use for genuine destructive deletion.
+`);
+
+  const profile = loadSkillProfile(skillDir);
+  const [codeExample, genuineDirective] = runRegression(profile, {
+    shouldTrigger: [{ prompt: "alpha beta gamma delta" }],
+    shouldNotTrigger: [{ prompt: "genuine destructive deletion" }]
+  });
+
+  assert.equal(codeExample.actual, true);
+  assert.deepEqual(codeExample.matchedVetoes, []);
+  assert.equal(genuineDirective.actual, false);
+  assert.deepEqual(genuineDirective.matchedVetoes.sort(), ["deletion", "destructive", "genuine"]);
+});
+
 test("rejects invalid and zero-coverage fixture sets", () => {
   const invalid = [
     [{ shouldNotTrigger: [{ prompt: "no" }] }, /shouldTrigger.*array/],
