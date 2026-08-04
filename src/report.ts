@@ -19,17 +19,27 @@ export function renderJson(report: RegressionReport): string {
   return JSON.stringify(report, null, 2);
 }
 
+function renderMarkdownInline(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\\/g, "\\\\")
+    .replace(/([`*_[\]{}()#+.!|\-])/g, "\\$1")
+    .replace(/\r\n?|\n/g, "<br>");
+}
+
 export function renderMarkdown(report: RegressionReport): string {
   const lines = ["# Skill Trigger Regression", "", `Skill: ${report.skill}`, `Passed: ${report.passed ? "yes" : "no"}`, `Total: ${report.summary.total} | Failed: ${report.summary.failed}`, ""];
   for (const result of report.results) {
     const icon = result.expected === result.actual ? "PASS" : "FAIL";
-    lines.push(`## ${icon}: ${result.prompt}`, "");
+    lines.push(`## ${icon}: ${renderMarkdownInline(result.prompt)}`, "");
     lines.push(`- Expected trigger: ${result.expected}`);
     lines.push(`- Actual trigger: ${result.actual}`);
     lines.push(`- Score: ${result.score}`);
     lines.push(`- Matched phrases: ${result.matchedPhrases.join(", ") || "none"}`);
     lines.push(`- Matched vetoes: ${result.matchedVetoes.join(", ") || "none"}`);
-    if (result.rationale) lines.push(`- Rationale: ${result.rationale}`);
+    if (result.rationale) lines.push(`- Rationale: ${renderMarkdownInline(result.rationale)}`);
     lines.push("");
   }
   return lines.join("\n");

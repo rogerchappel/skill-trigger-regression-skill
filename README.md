@@ -24,6 +24,14 @@ npm run release:check
 - Scores positive and negative prompt fixtures deterministically.
 - Emits Markdown or JSON reports for CI, release review, or prompt regression triage.
 
+### Report formats
+
+JSON reports preserve prompt and rationale strings exactly, including embedded
+line breaks. Markdown reports keep those fields inside their heading or list
+item: Markdown and HTML-significant characters are escaped, and embedded line
+breaks render as `<br>`. This prevents fixture text such as headings or list
+markers from changing the report's document structure.
+
 ## Safety
 
 No LLM calls, network calls, telemetry, file mutation, or hosted marketplace checks. The CLI only reads local files and writes reports.

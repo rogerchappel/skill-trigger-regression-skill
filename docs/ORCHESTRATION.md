@@ -14,4 +14,7 @@ The harness is deterministic so it can run in CI without model access.
 The CLI exits `0` when the regression passes, `2` when valid fixtures reveal a
 regression, and `1` for command, fixture, file, or configuration errors. Command
 errors are written as concise diagnostics to stderr. Supported output formats
-are `markdown` and `json`; options requiring values reject omitted values.
+are `markdown` and `json`; options requiring values reject omitted values. JSON
+preserves prompt and rationale text exactly. Markdown escapes formatting
+characters in those fields and renders embedded line breaks as `<br>` so their
+contents cannot introduce report headings or list items.
