@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { buildReport, loadFixtures, loadSkillProfile, runRegression } from "../dist/index.js";
+import { buildReport, loadFixtures, loadSkillProfile, renderJson, renderMarkdown, runRegression } from "../dist/index.js";
 
 test("passes sample trigger regression", () => {
   const profile = loadSkillProfile("fixtures/sample-skill");
@@ -19,6 +19,50 @@ test("reports matched phrases", () => {
   const fixtures = loadFixtures("fixtures/triggers.json");
   const result = runRegression(profile, fixtures)[0];
   assert.ok(result.matchedPhrases.length >= 2);
+});
+
+test("Markdown reports keep prompt and rationale text inline", () => {
+  const report = {
+    skill: "example",
+    passed: true,
+    summary: { total: 1, failed: 0, positives: 1, negatives: 0 },
+    results: [{
+      prompt: "First line\n# injected heading\n- injected item",
+      expected: true,
+      actual: true,
+      score: 1,
+      matchedPhrases: [],
+      matchedVetoes: [],
+      rationale: "Why this matches\n## rationale heading\n* rationale item"
+    }]
+  };
+
+  const markdown = renderMarkdown(report);
+  assert.match(markdown, /^## PASS: First line<br>\\# injected heading<br>\\- injected item$/m);
+  assert.match(markdown, /^- Rationale: Why this matches<br>\\#\\# rationale heading<br>\\\* rationale item$/m);
+  assert.equal(markdown.includes("\n# injected heading"), false);
+  assert.equal(markdown.includes("\n- injected item"), false);
+  assert.equal(markdown.includes("\n## rationale heading"), false);
+  assert.equal(markdown.includes("\n* rationale item"), false);
+});
+
+test("JSON reports preserve multiline prompt and rationale text", () => {
+  const report = {
+    skill: "example",
+    passed: true,
+    summary: { total: 1, failed: 0, positives: 1, negatives: 0 },
+    results: [{
+      prompt: "First line\n# heading\n- item",
+      expected: true,
+      actual: true,
+      score: 1,
+      matchedPhrases: [],
+      matchedVetoes: [],
+      rationale: "Reason\n## heading\n* item"
+    }]
+  };
+
+  assert.deepEqual(JSON.parse(renderJson(report)), report);
 });
 
 test("limits vetoes to negative sections and reports matched vetoes", () => {
