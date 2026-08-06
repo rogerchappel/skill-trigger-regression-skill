@@ -12,4 +12,8 @@
 - No external services.
 - CLI and import API included.
 - `npm run release:check` covers type checking, tests, CLI smoke and fixture
-  runs, and package dry-run.
+  runs, then packs from clean source and installs the tarball to verify the
+  published CLI and required runtime files.
+- `npm pack` runs the TypeScript build automatically through the `prepack`
+  lifecycle; a separate manual build is not required after installing
+  development dependencies.

@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
+    "prepack": "npm run build",
     "test": "npm run build && node --test tests/*.test.mjs",
     "smoke": "npm run build && node dist/cli.js --help",
     "release:check": "bash scripts/validate.sh"
