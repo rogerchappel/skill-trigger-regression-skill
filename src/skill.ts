@@ -8,6 +8,51 @@ function keywords(text: string): string[] {
   return Array.from(new Set(text.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) ?? [])).filter((word) => !stop.has(word));
 }
 
+function triggerSource(body: string): string {
+  const lines = body.split("\n");
+  const sections: string[] = [];
+  let section: string[] | undefined;
+  let sectionLevel = 0;
+  let fence: { marker: "`" | "~"; length: number } | undefined;
+
+  for (const line of lines) {
+    if (fence) {
+      section?.push(line);
+      const closingFence = line.match(/^ {0,3}(`{3,}|~{3,})[ \t]*$/)?.[1];
+      if (closingFence?.[0] === fence.marker && closingFence.length >= fence.length) fence = undefined;
+      continue;
+    }
+
+    const openingFence = line.match(/^ {0,3}(`{3,}|~{3,})/)?.[1];
+    if (openingFence) {
+      section?.push(line);
+      fence = { marker: openingFence[0] as "`" | "~", length: openingFence.length };
+      continue;
+    }
+
+    const heading = line.match(/^ {0,3}(#{1,6})[ \t]+(.+?)#*[ \t]*$/);
+    if (heading) {
+      const level = heading[1].length;
+      if (section && level <= sectionLevel) {
+        sections.push(section.join("\n"));
+        section = undefined;
+      }
+      if (/^(?:use this skill|when to use|examples?|triggers?)(?:\b|:)/i.test(heading[2])) {
+        if (section) sections.push(section.join("\n"));
+        section = [line];
+        sectionLevel = level;
+      } else {
+        section?.push(line);
+      }
+    } else {
+      section?.push(line);
+    }
+  }
+
+  if (section) sections.push(section.join("\n"));
+  return sections.length ? sections.join("\n") : body.slice(0, 1200);
+}
+
 function vetoSource(body: string): string {
   const negativeSections: string[] = [];
   const directives: string[] = [];
@@ -51,9 +96,7 @@ export function loadSkillProfile(skillDir: string): SkillProfile {
   const file = path.join(skillDir, "SKILL.md");
   const body = fs.readFileSync(file, "utf8");
   const name = path.basename(path.resolve(skillDir));
-  const triggerBlocks = body.split(/\n(?=## )/).filter((block) => /use this skill|when to use|examples|trigger/i.test(block));
-  const phraseSource = triggerBlocks.length ? triggerBlocks.join("\n") : body.slice(0, 1200);
-  const phrases = keywords(phraseSource);
+  const phrases = keywords(triggerSource(body));
   const vetoes = keywords(vetoSource(body));
   return { name, phrases, vetoes };
 }
