@@ -21,6 +21,45 @@ test("reports matched phrases", () => {
   assert.ok(result.matchedPhrases.length >= 2);
 });
 
+test("extracts trigger sections from level-3 ATX headings without including preamble", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "level-three-trigger-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# level-three-trigger-skill
+
+Boilerplate filler describes unrelated setup.
+
+### When to use
+
+Use this skill for nebula reports and quasar summaries.
+
+### Limitations
+
+Avoid destructive deletion.
+`);
+
+  const profile = loadSkillProfile(skillDir);
+  const [positive, unrelatedPreamble] = runRegression(profile, {
+    shouldTrigger: [{ prompt: "nebula quasar analysis" }],
+    shouldNotTrigger: [{ prompt: "boilerplate filler" }]
+  });
+
+  assert.equal(positive.actual, true);
+  assert.deepEqual(positive.matchedPhrases.sort(), ["nebula", "quasar"]);
+  assert.equal(unrelatedPreamble.actual, false);
+  assert.deepEqual(unrelatedPreamble.matchedPhrases, []);
+});
+
+test("falls back to the opening skill text when no trigger heading exists", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "fallback-trigger-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# fallback-trigger-skill
+
+Nebula reports and quasar summaries are supported.
+`);
+
+  const profile = loadSkillProfile(skillDir);
+  assert.equal(profile.phrases.includes("nebula"), true);
+  assert.equal(profile.phrases.includes("quasar"), true);
+});
+
 test("Markdown reports keep prompt and rationale text inline", () => {
   const report = {
     skill: "example",
