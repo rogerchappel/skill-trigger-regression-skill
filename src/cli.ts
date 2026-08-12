@@ -11,9 +11,17 @@ function help(): string {
 }
 
 const args = process.argv.slice(2);
-if (args.includes("--help") || args[0] !== "run") {
+if (args.length === 1 && args[0] === "--help") {
   console.log(help());
-  process.exit(args.includes("--help") ? 0 : 1);
+  process.exit(0);
+}
+if (args.includes("--help")) {
+  console.error(`--help must be used alone\n${help()}`);
+  process.exit(1);
+}
+if (args[0] !== "run") {
+  console.error(`Expected the run command\n${help()}`);
+  process.exit(1);
 }
 const skillDir = args[1];
 const options = new Map<string, string>();
@@ -22,6 +30,10 @@ for (let index = 2; index < args.length; index += 2) {
   const option = args[index];
   if (!supported.has(option)) {
     console.error(`Unknown option: ${option}\n${help()}`);
+    process.exit(1);
+  }
+  if (options.has(option)) {
+    console.error(`Duplicate option: ${option}\n${help()}`);
     process.exit(1);
   }
   const value = args[index + 1];
