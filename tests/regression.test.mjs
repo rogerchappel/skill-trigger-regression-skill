@@ -240,6 +240,40 @@ function runCli(args) {
   return spawnSync(process.execPath, ["dist/cli.js", ...args], { encoding: "utf8" });
 }
 
+test("CLI help succeeds only when used alone", () => {
+  const help = runCli(["--help"]);
+  assert.equal(help.status, 0);
+  assert.match(help.stdout, /^Usage: skill-trigger-regression /);
+  assert.equal(help.stderr, "");
+
+  for (const args of [
+    ["--help", "--wat"],
+    ["run", "--help"],
+    ["run", "fixtures/sample-skill", "--help"]
+  ]) {
+    const result = runCli(args);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /^--help must be used alone\nUsage:/);
+  }
+});
+
+test("CLI rejects repeated value options without producing a report", () => {
+  for (const option of ["--fixtures", "--format", "--output"]) {
+    const firstValue = option === "--fixtures" ? "fixtures/triggers.json" : option === "--format" ? "markdown" : "first.md";
+    const secondValue = option === "--fixtures" ? "fixtures/triggers.json" : option === "--format" ? "json" : "second.md";
+    const result = runCli([
+      "run", "fixtures/sample-skill",
+      "--fixtures", "fixtures/triggers.json",
+      option, firstValue,
+      option, secondValue
+    ]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, new RegExp(`^Duplicate option: ${option}\\nUsage:`));
+  }
+});
+
 test("CLI rejects malformed options with concise command errors", () => {
   for (const args of [
     ["run", "fixtures/sample-skill"],
