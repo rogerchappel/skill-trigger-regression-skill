@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import path from "node:path";
 import { buildReport } from "./report.js";
 import { loadFixtures } from "./fixtures.js";
 import { loadSkillProfile } from "./skill.js";
@@ -8,6 +9,20 @@ import { runRegression } from "./scorer.js";
 
 function help(): string {
   return "Usage: skill-trigger-regression run <skill-dir> --fixtures triggers.json [--format markdown|json] [--output file]";
+}
+
+function resolvedPath(file: string): string {
+  const absolute = path.resolve(file);
+  if (fs.existsSync(absolute)) return fs.realpathSync(absolute);
+  return path.join(fs.realpathSync(path.dirname(absolute)), path.basename(absolute));
+}
+
+function assertDistinctOutput(output: string, fixtureFile: string, skillDir: string): void {
+  const destination = resolvedPath(output);
+  const inputs = [resolvedPath(fixtureFile), resolvedPath(path.join(skillDir, "SKILL.md"))];
+  if (inputs.includes(destination)) {
+    throw new Error(`Output path must not overwrite an input file: ${output}`);
+  }
 }
 
 const args = process.argv.slice(2);
@@ -54,10 +69,11 @@ if (format !== "markdown" && format !== "json") {
   process.exit(1);
 }
 try {
+  const output = options.get("--output");
+  if (output) assertDistinctOutput(output, fixtureFile, skillDir);
   const profile = loadSkillProfile(skillDir);
   const report = buildReport(profile, runRegression(profile, loadFixtures(fixtureFile)));
   const rendered = format === "json" ? renderJson(report) : renderMarkdown(report);
-  const output = options.get("--output");
   if (output) fs.writeFileSync(output, rendered);
   else process.stdout.write(rendered);
   process.exit(report.passed ? 0 : 2);

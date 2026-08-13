@@ -24,6 +24,10 @@ npm run release:check
 - Scores positive and negative prompt fixtures deterministically.
 - Emits Markdown or JSON reports for CI, release review, or prompt regression triage.
 
+When `--output` is provided, its resolved path must differ from both the fixture
+file and the target skill's `SKILL.md`. The command rejects collisions before
+writing so report generation cannot overwrite either input.
+
 ### Report formats
 
 JSON reports preserve prompt and rationale strings exactly, including embedded
@@ -34,7 +38,9 @@ markers from changing the report's document structure.
 
 ## Safety
 
-No LLM calls, network calls, telemetry, file mutation, or hosted marketplace checks. The CLI only reads local files and writes reports.
+No LLM calls, network calls, telemetry, or hosted marketplace checks. The CLI
+only reads local inputs and writes a report when `--output` names a distinct
+file.
 
 ## Limitations
 
