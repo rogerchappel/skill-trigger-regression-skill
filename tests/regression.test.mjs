@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -298,4 +298,50 @@ test("CLI preserves exit 2 for valid regression failures", () => {
   const result = runCli(["run", "fixtures/sample-skill", "--fixtures", file, "--format", "json"]);
   assert.equal(result.status, 2);
   assert.equal(JSON.parse(result.stdout).passed, false);
+});
+
+test("CLI rejects output that resolves to the fixture file without changing it", () => {
+  const fixture = "fixtures/triggers.json";
+  const before = readFileSync(fixture);
+  const result = runCli([
+    "run", "fixtures/sample-skill",
+    "--fixtures", fixture,
+    "--output", "fixtures/../fixtures/triggers.json"
+  ]);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.match(result.stderr, /^Error: Output path must not overwrite an input file:/);
+  assert.deepEqual(readFileSync(fixture), before);
+});
+
+test("CLI rejects output that resolves to the target SKILL.md without changing it", () => {
+  const skillFile = "fixtures/sample-skill/SKILL.md";
+  const before = readFileSync(skillFile);
+  const result = runCli([
+    "run", "fixtures/sample-skill",
+    "--fixtures", "fixtures/triggers.json",
+    "--output", "fixtures/sample-skill/../sample-skill/SKILL.md"
+  ]);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.match(result.stderr, /^Error: Output path must not overwrite an input file:/);
+  assert.deepEqual(readFileSync(skillFile), before);
+});
+
+test("CLI writes reports to a distinct output path", () => {
+  const directory = mkdtempSync(join(tmpdir(), "trigger-report-"));
+  const output = join(directory, "report.json");
+  const result = runCli([
+    "run", "fixtures/sample-skill",
+    "--fixtures", "fixtures/triggers.json",
+    "--format", "json",
+    "--output", output
+  ]);
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, "");
+  assert.equal(result.stderr, "");
+  assert.equal(JSON.parse(readFileSync(output, "utf8")).passed, true);
 });
