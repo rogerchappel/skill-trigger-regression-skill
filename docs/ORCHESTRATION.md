@@ -18,3 +18,7 @@ are `markdown` and `json`; options requiring values reject omitted values. JSON
 preserves prompt and rationale text exactly. Markdown escapes formatting
 characters in those fields and renders embedded line breaks as `<br>` so their
 contents cannot introduce report headings or list items.
+
+An `--output` path that resolves to the fixture file or the target skill's
+`SKILL.md` is a configuration error and exits `1`. The collision is rejected
+before either input can be modified; choose a distinct report path.
