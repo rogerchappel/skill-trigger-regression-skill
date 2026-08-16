@@ -60,6 +60,50 @@ Nebula reports and quasar summaries are supported.
   assert.equal(profile.phrases.includes("quasar"), true);
 });
 
+test("keeps Setext limitation terms out of triggers and uses them as vetoes", () => {
+  const profile = loadSkillProfile("fixtures/setext-skill");
+  const results = runRegression(profile, loadFixtures("fixtures/setext-triggers.json"));
+
+  for (const phrase of ["analyze", "lunar", "telemetry", "inspect", "orbital", "reports"]) {
+    assert.equal(profile.phrases.includes(phrase), true);
+  }
+  for (const limitation of ["gardening", "recipes"]) {
+    assert.equal(profile.phrases.includes(limitation), false);
+    assert.equal(profile.vetoes.includes(limitation), true);
+  }
+  assert.equal(results[0].actual, true);
+  assert.equal(results[1].actual, false);
+  assert.deepEqual(results[1].matchedVetoes.sort(), ["gardening", "recipes"]);
+});
+
+test("ignores fenced Setext pseudo-headings", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "fenced-setext-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# fenced-setext-skill
+
+When to use
+-----------
+
+Use this skill for nebula reports and quasar summaries.
+
+\`\`\`markdown
+Limitations
+-----------
+Avoid nebula reports and quasar summaries.
+\`\`\`
+
+Limitations
+-----------
+
+Avoid gardening recipes.
+`);
+
+  const profile = loadSkillProfile(skillDir);
+  assert.equal(profile.vetoes.includes("nebula"), false);
+  assert.equal(profile.vetoes.includes("quasar"), false);
+  assert.equal(profile.vetoes.includes("gardening"), true);
+  assert.equal(profile.vetoes.includes("recipes"), true);
+});
+
 test("Markdown reports keep prompt and rationale text inline", () => {
   const report = {
     skill: "example",

@@ -1,0 +1,8 @@
+{
+  "shouldTrigger": [
+    { "prompt": "Analyze lunar telemetry and orbital reports" }
+  ],
+  "shouldNotTrigger": [
+    { "prompt": "gardening recipes only" }
+  ]
+}

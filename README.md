@@ -19,7 +19,7 @@ npm run release:check
 ## What it does
 
 - Reads a skill directory containing `SKILL.md`.
-- Extracts activation phrases from headings, examples, and trigger-like wording.
+- Extracts activation phrases from ATX and Setext headings, examples, and trigger-like wording.
 - Excludes fenced and top-level indented Markdown code from anti-example veto extraction.
 - Scores positive and negative prompt fixtures deterministically.
 - Emits Markdown or JSON reports for CI, release review, or prompt regression triage.
