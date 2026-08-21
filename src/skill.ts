@@ -11,7 +11,7 @@ function keywords(text: string): string[] {
 type MarkdownHeading = { level: number; title: string; lines: string[]; consumed: number };
 
 function markdownHeading(lines: string[], index: number): MarkdownHeading | undefined {
-  const atx = lines[index].match(/^ {0,3}(#{1,6})[ \t]+(.+?)#*[ \t]*$/);
+  const atx = lines[index].match(/^ {0,3}(#{1,6})[ \t]+(.+?)(?:[ \t]+#+)?[ \t]*$/);
   if (atx) return { level: atx[1].length, title: atx[2], lines: [lines[index]], consumed: 1 };
 
   const underline = lines[index + 1]?.match(/^ {0,3}(=+|-+)[ \t]*$/);
@@ -54,7 +54,7 @@ function triggerSource(body: string): string {
         sections.push(section.join("\n"));
         section = undefined;
       }
-      if (/^(?:use this skill|when to use|examples?|triggers?)(?:\b|:)/i.test(heading.title)) {
+      if (/^(?:use this skill|when to use|examples?|triggers?)(?:$|[ \t]|:)/i.test(heading.title)) {
         if (section) sections.push(section.join("\n"));
         section = [...heading.lines];
         sectionLevel = level;
@@ -76,6 +76,7 @@ function vetoSource(body: string): string {
   const negativeSections: string[] = [];
   const directives: string[] = [];
   let negativeSection: string[] | undefined;
+  let negativeSectionLevel = 0;
   let fence: { marker: "`" | "~"; length: number } | undefined;
 
   for (let index = 0; index < lines.length; index += 1) {
@@ -99,10 +100,17 @@ function vetoSource(body: string): string {
     const parsedHeading = markdownHeading(lines, index);
     const heading = parsedHeading?.title ?? "";
     if (heading) {
-      if (negativeSection) negativeSections.push(negativeSection.join("\n"));
-      negativeSection = /limitations?|should not|do not use|not for|avoid/i.test(heading)
-        ? [...parsedHeading!.lines]
-        : undefined;
+      const startsNegativeSection = /limitations?|should not|do not use|not for|avoid/i.test(heading);
+      if (negativeSection && parsedHeading!.level <= negativeSectionLevel) {
+        negativeSections.push(negativeSection.join("\n"));
+        negativeSection = undefined;
+      }
+      if (!negativeSection && startsNegativeSection) {
+        negativeSection = [...parsedHeading!.lines];
+        negativeSectionLevel = parsedHeading!.level;
+      } else {
+        negativeSection?.push(...parsedHeading!.lines);
+      }
       index += parsedHeading!.consumed - 1;
     } else if (negativeSection) {
       negativeSection.push(line);
