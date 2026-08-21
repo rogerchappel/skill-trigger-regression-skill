@@ -60,6 +60,40 @@ Nebula reports and quasar summaries are supported.
   assert.equal(profile.phrases.includes("quasar"), true);
 });
 
+test("preserves attached ATX hashes while accepting whitespace-separated closing hashes", () => {
+  const attachedHashDir = mkdtempSync(join(tmpdir(), "attached-hash-skill-"));
+  writeFileSync(join(attachedHashDir, "SKILL.md"), `# attached-hash-skill
+
+Boilerplate filler describes unrelated setup.
+
+## When to use#
+
+Use this skill for pineapple workflows.
+
+## Examples
+
+Use this skill for orange summaries.
+`);
+
+  const attachedHashProfile = loadSkillProfile(attachedHashDir);
+  assert.equal(attachedHashProfile.phrases.includes("pineapple"), false);
+  assert.equal(attachedHashProfile.phrases.includes("orange"), true);
+
+  const closingHashDir = mkdtempSync(join(tmpdir(), "closing-hash-skill-"));
+  writeFileSync(join(closingHashDir, "SKILL.md"), `# closing-hash-skill
+
+Boilerplate filler describes unrelated setup.
+
+## When to use ###
+
+Use this skill for pineapple workflows.
+`);
+
+  const closingHashProfile = loadSkillProfile(closingHashDir);
+  assert.equal(closingHashProfile.phrases.includes("pineapple"), true);
+  assert.equal(closingHashProfile.phrases.includes("boilerplate"), false);
+});
+
 test("keeps Setext limitation terms out of triggers and uses them as vetoes", () => {
   const profile = loadSkillProfile("fixtures/setext-skill");
   const results = runRegression(profile, loadFixtures("fixtures/setext-triggers.json"));
@@ -163,6 +197,39 @@ test("limits vetoes to negative sections and reports matched vetoes", () => {
   assert.deepEqual(results[0].matchedVetoes, []);
   assert.equal(results[1].actual, false);
   assert.deepEqual(results[1].matchedVetoes.sort(), ["deletion", "destructive"]);
+});
+
+test("keeps descendant prose in negative sections and stops at sibling sections", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "nested-negative-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# nested-negative-skill
+
+## When to use
+
+Use this skill for pineapple requests.
+
+## Limitations
+
+### Unsupported contexts
+
+Banana operations are unsupported.
+
+## Examples
+
+Dragonfruit examples are safe.
+`);
+
+  const profile = loadSkillProfile(skillDir);
+  const [siblingSection, nestedLimitation] = runRegression(profile, {
+    shouldNotTrigger: [{ prompt: "pineapple banana request" }],
+    shouldTrigger: [{ prompt: "pineapple dragonfruit request" }]
+  });
+
+  assert.equal(profile.vetoes.includes("banana"), true);
+  assert.equal(profile.vetoes.includes("dragonfruit"), false);
+  assert.equal(nestedLimitation.actual, false);
+  assert.equal(nestedLimitation.matchedVetoes.includes("banana"), true);
+  assert.equal(siblingSection.actual, true);
+  assert.deepEqual(siblingSection.matchedVetoes, []);
 });
 
 test("ignores ATX headings inside backtick and tilde fences when extracting vetoes", () => {
