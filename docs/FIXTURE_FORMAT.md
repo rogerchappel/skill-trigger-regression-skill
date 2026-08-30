@@ -23,3 +23,7 @@ whose title starts with `When to use`, `Use this skill`, `Examples`, or
 `Trigger`. Content outside those sections is excluded. If none of those
 headings exists, extraction falls back to the first 1,200 characters of the
 skill file.
+
+Skill Markdown may use LF or CRLF line endings. Parsing normalizes line endings
+before recognizing headings, fenced blocks, section boundaries, and negative
+directives, so the same document produces the same profile on every platform.
