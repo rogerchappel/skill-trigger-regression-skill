@@ -138,6 +138,58 @@ Avoid gardening recipes.
   assert.equal(profile.vetoes.includes("recipes"), true);
 });
 
+test("parses CRLF ATX and Setext sections consistently through the CLI", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "crlf-markdown-skill-"));
+  const skill = `# crlf-markdown-skill
+
+Boilerplate filler is outside the trigger section.
+
+## When To Use
+
+Use this skill for nebula reports and quasar summaries.
+
+\`\`\`markdown
+## Do Not Use
+Avoid nebula reports and quasar summaries.
+\`\`\`
+
+Do Not Use
+----------
+
+Avoid destructive deletion.
+
+## Examples
+
+Use this skill for orbital telemetry.
+`.replace(/\n/g, "\r\n");
+  writeFileSync(join(skillDir, "SKILL.md"), skill);
+
+  const fixtures = {
+    shouldTrigger: [
+      { prompt: "nebula quasar report" },
+      { prompt: "orbital telemetry summary" }
+    ],
+    shouldNotTrigger: [{ prompt: "destructive deletion" }]
+  };
+  const fixtureFile = join(skillDir, "triggers.json");
+  writeFileSync(fixtureFile, JSON.stringify(fixtures));
+
+  const profile = loadSkillProfile(skillDir);
+  assert.equal(profile.phrases.includes("boilerplate"), false);
+  assert.equal(profile.vetoes.includes("nebula"), false);
+  assert.equal(profile.vetoes.includes("destructive"), true);
+  assert.equal(profile.vetoes.includes("deletion"), true);
+
+  const results = runRegression(profile, fixtures);
+  assert.deepEqual(results.map((result) => result.actual), [true, true, false]);
+  assert.deepEqual(results[2].matchedVetoes.sort(), ["deletion", "destructive"]);
+
+  const cli = runCli(["run", skillDir, "--fixtures", fixtureFile, "--format", "json"]);
+  assert.equal(cli.status, 0);
+  assert.equal(cli.stderr, "");
+  assert.equal(JSON.parse(cli.stdout).passed, true);
+});
+
 test("Markdown reports keep prompt and rationale text inline", () => {
   const report = {
     skill: "example",

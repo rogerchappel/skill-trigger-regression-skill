@@ -126,7 +126,7 @@ function vetoSource(body: string): string {
 
 export function loadSkillProfile(skillDir: string): SkillProfile {
   const file = path.join(skillDir, "SKILL.md");
-  const body = fs.readFileSync(file, "utf8");
+  const body = fs.readFileSync(file, "utf8").replace(/\r\n?/g, "\n");
   const name = path.basename(path.resolve(skillDir));
   const phrases = keywords(triggerSource(body));
   const vetoes = keywords(vetoSource(body));

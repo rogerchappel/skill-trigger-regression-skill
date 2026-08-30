@@ -14,7 +14,8 @@ The scorer is intentionally simple:
   `#` remains part of the heading title.
   Heading-like text and inline directives inside fenced code blocks are ignored.
   Both backtick and tilde fences are supported; a closing fence must use the
-  opening marker and be at least as long.
+  opening marker and be at least as long. LF and CRLF skill files are parsed
+  identically.
 - Two or more net matches count as a trigger.
 
 Reports list matched activation phrases and matched vetoes separately. Use
