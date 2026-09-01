@@ -12,7 +12,9 @@ The scorer is intentionally simple:
   underlined with `=` or `-`, including headings indented by up to three spaces.
   Optional ATX closing `#` sequences require separating whitespace; an attached
   `#` remains part of the heading title.
-  Heading-like text and inline directives inside fenced code blocks are ignored.
+  Fenced code content and opening-fence info strings are excluded from positive
+  activation phrases. Heading-like text and inline directives inside fenced
+  code blocks are also ignored for veto extraction.
   Both backtick and tilde fences are supported; a closing fence must use the
   opening marker and be at least as long. LF and CRLF skill files are parsed
   identically.
