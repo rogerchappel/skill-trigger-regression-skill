@@ -27,6 +27,7 @@ function markdownHeading(lines: string[], index: number): MarkdownHeading | unde
 function triggerSource(body: string): string {
   const lines = body.split("\n");
   const sections: string[] = [];
+  const unfencedLines: string[] = [];
   let section: string[] | undefined;
   let sectionLevel = 0;
   let fence: { marker: "`" | "~"; length: number } | undefined;
@@ -34,7 +35,6 @@ function triggerSource(body: string): string {
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     if (fence) {
-      section?.push(line);
       const closingFence = line.match(/^ {0,3}(`{3,}|~{3,})[ \t]*$/)?.[1];
       if (closingFence?.[0] === fence.marker && closingFence.length >= fence.length) fence = undefined;
       continue;
@@ -42,10 +42,11 @@ function triggerSource(body: string): string {
 
     const openingFence = line.match(/^ {0,3}(`{3,}|~{3,})/)?.[1];
     if (openingFence) {
-      section?.push(line);
       fence = { marker: openingFence[0] as "`" | "~", length: openingFence.length };
       continue;
     }
+
+    unfencedLines.push(line);
 
     const heading = markdownHeading(lines, index);
     if (heading) {
@@ -68,7 +69,7 @@ function triggerSource(body: string): string {
   }
 
   if (section) sections.push(section.join("\n"));
-  return sections.length ? sections.join("\n") : body.slice(0, 1200);
+  return sections.length ? sections.join("\n") : unfencedLines.join("\n").slice(0, 1200);
 }
 
 function vetoSource(body: string): string {
