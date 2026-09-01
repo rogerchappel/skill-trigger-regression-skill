@@ -24,6 +24,11 @@ whose title starts with `When to use`, `Use this skill`, `Examples`, or
 headings exists, extraction falls back to the first 1,200 characters of the
 skill file.
 
+Backtick and tilde fenced blocks are excluded from activation phrase
+extraction, including the opening fence's info string. Terms shown only in a
+code example therefore cannot independently activate a skill; ordinary prose
+before and after the fence remains eligible.
+
 Skill Markdown may use LF or CRLF line endings. Parsing normalizes line endings
 before recognizing headings, fenced blocks, section boundaries, and negative
 directives, so the same document produces the same profile on every platform.
