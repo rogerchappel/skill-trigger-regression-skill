@@ -329,6 +329,72 @@ Avoid irreversible erasure operations.
   assert.deepEqual(legitimateVetoRetained.matchedVetoes.sort(), ["erasure", "irreversible", "operations"]);
 });
 
+test("excludes fenced content and info strings from trigger phrases", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "fenced-trigger-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# fenced-trigger-skill
+
+## When to use
+
+Use this skill for nebula reports and quasar summaries.
+
+\`\`\`quantum-bananas
+quantum bananas
+\`\`\`
+
+Surrounding prose supports orbital telemetry.
+
+~~~forbidden-pineapples
+forbidden pineapples
+~~~
+`);
+
+  const profile = loadSkillProfile(skillDir);
+  for (const phrase of ["quantum", "bananas", "quantum-bananas", "forbidden", "pineapples", "forbidden-pineapples"]) {
+    assert.equal(profile.phrases.includes(phrase), false);
+  }
+  for (const phrase of ["nebula", "quasar", "orbital", "telemetry"]) {
+    assert.equal(profile.phrases.includes(phrase), true);
+  }
+});
+
+test("fenced trigger terms cannot independently activate through the CLI", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "fenced-trigger-cli-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# fenced-trigger-cli-skill
+
+## When to use
+
+Use this skill for nebula reports and quasar summaries.
+
+\`\`\`quantum-bananas
+quantum bananas
+\`\`\`
+
+Surrounding prose supports orbital telemetry.
+
+~~~forbidden-pineapples
+forbidden pineapples
+~~~
+`);
+  const fixtureFile = join(skillDir, "triggers.json");
+  writeFileSync(fixtureFile, JSON.stringify({
+    shouldTrigger: [
+      { prompt: "nebula quasar report" },
+      { prompt: "orbital telemetry summary" }
+    ],
+    shouldNotTrigger: [
+      { prompt: "quantum bananas" },
+      { prompt: "forbidden pineapples" }
+    ]
+  }));
+
+  const cli = runCli(["run", skillDir, "--fixtures", fixtureFile, "--format", "json"]);
+  assert.equal(cli.status, 0);
+  assert.equal(cli.stderr, "");
+  const report = JSON.parse(cli.stdout);
+  assert.equal(report.passed, true);
+  assert.deepEqual(report.results.map((result) => result.actual), [true, true, false, false]);
+});
+
 test("excludes indented Markdown code from the veto profile", () => {
   const skillDir = mkdtempSync(join(tmpdir(), "indented-code-skill-"));
   writeFileSync(join(skillDir, "SKILL.md"), `# indented-code-skill
