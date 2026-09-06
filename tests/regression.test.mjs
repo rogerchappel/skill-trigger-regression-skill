@@ -395,6 +395,62 @@ forbidden pineapples
   assert.deepEqual(report.results.map((result) => result.actual), [true, true, false, false]);
 });
 
+test("treats backtick fence candidates with backticks in their info string as ordinary trigger text", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "invalid-trigger-fence-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# invalid-trigger-fence-skill
+
+## When to use
+
+\`\`\` bad\`info
+Use this skill for aurora forecasts and magnetic storms.
+
+\`\`\`markdown
+hidden constellation example
+\`\`\`
+`);
+
+  const profile = loadSkillProfile(skillDir);
+  for (const phrase of ["aurora", "forecasts", "magnetic", "storms"]) {
+    assert.equal(profile.phrases.includes(phrase), true);
+  }
+  for (const phrase of ["hidden", "constellation"]) {
+    assert.equal(profile.phrases.includes(phrase), false);
+  }
+});
+
+test("preserves negative-section vetoes after an invalid backtick-info opener through the CLI", () => {
+  const skillDir = mkdtempSync(join(tmpdir(), "invalid-veto-fence-skill-"));
+  writeFileSync(join(skillDir, "SKILL.md"), `# invalid-veto-fence-skill
+
+Use this skill for aurora forecasts and magnetic storms.
+
+## Limitations
+
+\`\`\` bad\`info
+Do not use for solar flare emergencies.
+
+~~~markdown
+Do not use for hidden constellation examples.
+~~~
+`);
+  const fixtureFile = join(skillDir, "triggers.json");
+  writeFileSync(fixtureFile, JSON.stringify({
+    shouldTrigger: [{ prompt: "aurora magnetic forecast" }],
+    shouldNotTrigger: [{ prompt: "solar flare emergencies" }]
+  }));
+
+  const profile = loadSkillProfile(skillDir);
+  assert.equal(profile.vetoes.includes("solar"), true);
+  assert.equal(profile.vetoes.includes("hidden"), false);
+
+  const cli = runCli(["run", skillDir, "--fixtures", fixtureFile, "--format", "json"]);
+  assert.equal(cli.status, 0);
+  assert.equal(cli.stderr, "");
+  const report = JSON.parse(cli.stdout);
+  assert.equal(report.results[0].actual, true);
+  assert.equal(report.results[1].actual, false);
+});
+
 test("excludes indented Markdown code from the veto profile", () => {
   const skillDir = mkdtempSync(join(tmpdir(), "indented-code-skill-"));
   writeFileSync(join(skillDir, "SKILL.md"), `# indented-code-skill
