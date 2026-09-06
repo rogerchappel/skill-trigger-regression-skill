@@ -9,6 +9,13 @@ function keywords(text: string): string[] {
 }
 
 type MarkdownHeading = { level: number; title: string; lines: string[]; consumed: number };
+type MarkdownFence = { marker: "`" | "~"; length: number };
+
+function markdownOpeningFence(line: string): MarkdownFence | undefined {
+  const candidate = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+  if (!candidate || (candidate[1][0] === "`" && candidate[2].includes("`"))) return undefined;
+  return { marker: candidate[1][0] as "`" | "~", length: candidate[1].length };
+}
 
 function markdownHeading(lines: string[], index: number): MarkdownHeading | undefined {
   const atx = lines[index].match(/^ {0,3}(#{1,6})[ \t]+(.+?)(?:[ \t]+#+)?[ \t]*$/);
@@ -40,9 +47,9 @@ function triggerSource(body: string): string {
       continue;
     }
 
-    const openingFence = line.match(/^ {0,3}(`{3,}|~{3,})/)?.[1];
+    const openingFence = markdownOpeningFence(line);
     if (openingFence) {
-      fence = { marker: openingFence[0] as "`" | "~", length: openingFence.length };
+      fence = openingFence;
       continue;
     }
 
@@ -88,9 +95,9 @@ function vetoSource(body: string): string {
       continue;
     }
 
-    const openingFence = line.match(/^ {0,3}(`{3,}|~{3,})/)?.[1];
+    const openingFence = markdownOpeningFence(line);
     if (openingFence) {
-      fence = { marker: openingFence[0] as "`" | "~", length: openingFence.length };
+      fence = openingFence;
       continue;
     }
 
