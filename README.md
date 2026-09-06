@@ -20,7 +20,7 @@ npm run release:check
 
 - Reads a skill directory containing `SKILL.md`.
 - Extracts activation phrases from ATX and Setext headings, examples, and trigger-like wording.
-- Excludes backtick and tilde fenced Markdown (including fence info strings) from activation phrases and anti-example vetoes; top-level indented code is also excluded from vetoes.
+- Excludes valid backtick and tilde fenced Markdown (including fence info strings) from activation phrases and anti-example vetoes; following CommonMark, a backtick fence candidate whose info string contains a backtick is ordinary text. Top-level indented code is also excluded from vetoes.
 - Scores positive and negative prompt fixtures deterministically.
 - Emits Markdown or JSON reports for CI, release review, or prompt regression triage.
 
