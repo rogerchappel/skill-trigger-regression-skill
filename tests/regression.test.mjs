@@ -6,6 +6,28 @@ import { join } from "node:path";
 import test from "node:test";
 import { buildReport, loadFixtures, loadSkillProfile, renderJson, renderMarkdown, runRegression } from "../dist/index.js";
 
+test("matches multiword trigger and veto phrases as normalized prompt text", () => {
+  const profile = { name: "phrases", phrases: ["incident response", "rapid review"], vetoes: ["medical advice"] };
+  const matched = runRegression(profile, {
+    shouldTrigger: [{ prompt: "Please start INCIDENT   RESPONSE with RAPID REVIEW now" }],
+    shouldNotTrigger: [{ prompt: "incident response for medical advice" }]
+  });
+  assert.equal(matched[0].actual, true);
+  assert.deepEqual(matched[0].matchedPhrases, ["incident response", "rapid review"]);
+  assert.equal(matched[1].actual, false);
+  assert.deepEqual(matched[1].matchedPhrases, ["incident response"]);
+  assert.deepEqual(matched[1].matchedVetoes, ["medical advice"]);
+});
+
+test("phrase matching respects token boundaries", () => {
+  const profile = { name: "phrases", phrases: ["incident response"], vetoes: [] };
+  const [result] = runRegression(profile, {
+    shouldTrigger: [{ prompt: "incident response" }],
+    shouldNotTrigger: [{ prompt: "incident responseful" }]
+  });
+  assert.deepEqual(result.matchedPhrases, ["incident response"]);
+});
+
 test("passes sample trigger regression", () => {
   const profile = loadSkillProfile("fixtures/sample-skill");
   const fixtures = loadFixtures("fixtures/triggers.json");

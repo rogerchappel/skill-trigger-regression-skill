@@ -1,13 +1,14 @@
 import type { PromptResult, SkillProfile, TriggerFixture } from "./types.js";
 
-function words(text: string): Set<string> {
-  return new Set(text.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) ?? []);
+function matchesPhrase(prompt: string, phrase: string): boolean {
+  const escaped = phrase.toLowerCase().trim().split(/\s+/).map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s+");
+  if (!escaped) return false;
+  return new RegExp(`(?<![a-z0-9-])${escaped}(?![a-z0-9-])`, "i").test(prompt);
 }
 
 export function scorePrompt(profile: SkillProfile, prompt: string): { actual: boolean; score: number; matchedPhrases: string[]; matchedVetoes: string[] } {
-  const promptWords = words(prompt);
-  const matchedPhrases = profile.phrases.filter((phrase) => promptWords.has(phrase));
-  const matchedVetoes = profile.vetoes.filter((phrase) => promptWords.has(phrase));
+  const matchedPhrases = profile.phrases.filter((phrase) => matchesPhrase(prompt, phrase));
+  const matchedVetoes = profile.vetoes.filter((phrase) => matchesPhrase(prompt, phrase));
   const score = matchedPhrases.length - matchedVetoes.length * 2;
   return { actual: score >= 2, score, matchedPhrases, matchedVetoes };
 }
